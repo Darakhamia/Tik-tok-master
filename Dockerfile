@@ -20,6 +20,6 @@ RUN mkdir -p /tmp/tiktok && chown botuser:botuser /tmp/tiktok
 
 USER botuser
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 CMD ["python", "/app/healthcheck.py"]
+HEALTHCHECK NONE
 
 CMD ["python", "bot.py"]
