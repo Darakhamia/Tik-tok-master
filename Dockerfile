@@ -13,14 +13,13 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY bot.py downloader.py config.py ./
+COPY bot.py downloader.py config.py healthcheck.py ./
 
 # Temp directory owned by botuser
 RUN mkdir -p /tmp/tiktok && chown botuser:botuser /tmp/tiktok
 
 USER botuser
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD ["python", "-c", "import sys; sys.exit(0)"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 CMD ["python", "/app/healthcheck.py"]
 
 CMD ["python", "bot.py"]
