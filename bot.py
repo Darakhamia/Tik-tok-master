@@ -1,11 +1,12 @@
 import asyncio
+import http.server
 import logging
 import os
 import re
 import sys
+import threading
 
 from telegram import Update
-from telegram.constants import ParseMode
 from telegram.ext import Application, ContextTypes, MessageHandler, filters
 
 import config
@@ -99,6 +100,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 logger.warning("Could not remove temp file %s: %s", video_path, exc)
 
 
+class _HealthHandler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self) -> None:
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"OK")
+
+    def log_message(self, *args) -> None:
+        pass  # silence access logs
+
+
+def _start_health_server(port: int = 3000) -> None:
+    server = http.server.HTTPServer(("", port), _HealthHandler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    logger.info("Health server listening on port %d", port)
+
+
 def main() -> None:
     application = (
         Application.builder()
@@ -113,6 +130,7 @@ def main() -> None:
         )
     )
 
+    _start_health_server()
     logger.info("Bot starting (polling)…")
     application.run_polling(drop_pending_updates=True)
 
