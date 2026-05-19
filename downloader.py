@@ -19,6 +19,8 @@ async def download_tiktok(url: str, temp_dir: str, max_size_mb: int) -> str | No
         "--format", "bestvideo+bestaudio/best",
         "--merge-output-format", "mp4",
         "--no-playlist",
+        "--extractor-retries", "3",
+        "--socket-timeout", "30",
         "--output", output_path,
         url,
     ]
