@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  tiktok-bot:
+    build: .
+    container_name: tiktok-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - tiktok_tmp:/tmp/tiktok
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  tiktok_tmp:
