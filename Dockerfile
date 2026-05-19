@@ -21,6 +21,6 @@ RUN mkdir -p /tmp/tiktok && chown botuser:botuser /tmp/tiktok
 USER botuser
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD python -c "import sys; sys.exit(0)"
+    CMD ["python", "-c", "import sys; sys.exit(0)"]
 
 CMD ["python", "bot.py"]
