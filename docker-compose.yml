@@ -6,7 +6,7 @@ services:
     container_name: tiktok-bot
     restart: unless-stopped
     command: ["python", "bot.py"]
-    # Env vars (BOT_TOKEN, MAX_FILE_SIZE_MB, TEMP_DIR) are injected by Coolify via its UI.
+    # Env vars (BOT_TOKEN, MAX_FILE_SIZE_MB, TEMP_DIR, TIKTOK_TOPIC_ID) are injected by Coolify via its UI.
     # For local dev: rename .env.example → .env and uncomment the line below.
     # env_file: .env
     volumes:
