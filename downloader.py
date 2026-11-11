@@ -7,8 +7,8 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-async def download_tiktok(url: str, temp_dir: str, max_size_mb: int) -> str | None:
-    """Download a TikTok video. Returns the file path on success, None on failure."""
+async def download_video(url: str, temp_dir: str, max_size_mb: int) -> str | None:
+    """Download a short video (TikTok, Reels, Shorts). Returns the file path on success, None on failure."""
     Path(temp_dir).mkdir(parents=True, exist_ok=True)
     output_path = os.path.join(temp_dir, f"{uuid.uuid4()}.mp4")
 
@@ -16,8 +16,11 @@ async def download_tiktok(url: str, temp_dir: str, max_size_mb: int) -> str | No
         "yt-dlp",
         "--no-warnings",
         "--quiet",
-        "--format", "bestvideo+bestaudio/best",
+        "--format", "bv*+ba/b",
+        # H.264 + AAC plays inline in every Telegram client; cap at 1080p to stay under the size limit.
+        "--format-sort", "vcodec:h264,res:1080,acodec:m4a",
         "--merge-output-format", "mp4",
+        "--max-filesize", f"{max_size_mb}M",
         "--no-playlist",
         "--extractor-retries", "3",
         "--socket-timeout", "30",
@@ -25,7 +28,7 @@ async def download_tiktok(url: str, temp_dir: str, max_size_mb: int) -> str | No
         url,
     ]
 
-    logger.info("Downloading TikTok video: %s", url)
+    logger.info("Downloading video: %s", url)
     proc = await asyncio.create_subprocess_exec(
         *cmd,
         stdout=asyncio.subprocess.PIPE,
@@ -38,7 +41,7 @@ async def download_tiktok(url: str, temp_dir: str, max_size_mb: int) -> str | No
         return None
 
     if not os.path.exists(output_path):
-        logger.error("yt-dlp exited cleanly but output file not found: %s", output_path)
+        logger.error("No file downloaded (too large or unavailable): %s", url)
         return None
 
     size_mb = os.path.getsize(output_path) / (1024 * 1024)

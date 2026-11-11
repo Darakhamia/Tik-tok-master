@@ -13,10 +13,10 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY bot.py downloader.py config.py healthcheck.py ./
+COPY bot.py downloader.py config.py storage.py healthcheck.py ./
 
-# Temp directory owned by botuser
-RUN mkdir -p /tmp/tiktok && chown botuser:botuser /tmp/tiktok
+# Temp and data directories owned by botuser
+RUN mkdir -p /tmp/tiktok /app/data && chown botuser:botuser /tmp/tiktok /app/data
 
 USER botuser
 
