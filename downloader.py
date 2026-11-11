@@ -1,5 +1,6 @@
 import asyncio
 import os
+import shutil
 import uuid
 import logging
 from pathlib import Path
@@ -7,10 +8,13 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-async def download_video(url: str, temp_dir: str, max_size_mb: int) -> str | None:
+async def download_video(
+    url: str, temp_dir: str, max_size_mb: int, cookies_file: str | None = None
+) -> str | None:
     """Download a short video (TikTok, Reels, Shorts). Returns the file path on success, None on failure."""
     Path(temp_dir).mkdir(parents=True, exist_ok=True)
-    output_path = os.path.join(temp_dir, f"{uuid.uuid4()}.mp4")
+    job_id = uuid.uuid4()
+    output_path = os.path.join(temp_dir, f"{job_id}.mp4")
 
     cmd = [
         "yt-dlp",
@@ -25,16 +29,27 @@ async def download_video(url: str, temp_dir: str, max_size_mb: int) -> str | Non
         "--extractor-retries", "3",
         "--socket-timeout", "30",
         "--output", output_path,
-        url,
     ]
 
+    cookies_copy = None
+    if cookies_file and os.path.isfile(cookies_file):
+        # yt-dlp writes cookies back on exit, so hand it a copy: a read-only mount would make it fail.
+        cookies_copy = os.path.join(temp_dir, f"{job_id}.cookies.txt")
+        shutil.copyfile(cookies_file, cookies_copy)
+        cmd += ["--cookies", cookies_copy]
+    cmd.append(url)
+
     logger.info("Downloading video: %s", url)
-    proc = await asyncio.create_subprocess_exec(
-        *cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-    stdout, stderr = await proc.communicate()
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await proc.communicate()
+    finally:
+        if cookies_copy and os.path.exists(cookies_copy):
+            os.remove(cookies_copy)
 
     if proc.returncode != 0:
         logger.error("yt-dlp failed (rc=%d): %s", proc.returncode, stderr.decode())
