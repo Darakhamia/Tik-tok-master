@@ -201,7 +201,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     video_path: str | None = None
     try:
-        video_path = await download_video(url, config.TEMP_DIR, config.MAX_FILE_SIZE_MB)
+        video_path = await download_video(
+            url, config.TEMP_DIR, config.MAX_FILE_SIZE_MB, config.COOKIES_FILE
+        )
     except Exception as exc:
         logger.error("Unexpected error during download: %s", exc)
 
@@ -275,6 +277,10 @@ def main() -> None:
     )
 
     _start_health_server()
+    if os.path.isfile(config.COOKIES_FILE):
+        logger.info("Using cookies from %s", config.COOKIES_FILE)
+    else:
+        logger.info("No cookies file at %s, downloading anonymously", config.COOKIES_FILE)
     logger.info("Bot starting (polling)…")
     application.run_polling(drop_pending_updates=True, allowed_updates=Update.ALL_TYPES)
 
